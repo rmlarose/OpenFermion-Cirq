@@ -184,7 +184,7 @@ def test_TwiddleGate_text_diagram():
          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
          [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
          ])
-def test_ffft_single_mode(amplitudes):
+def test_ffft_single_mode_power_of_two(amplitudes):
     initial_state = _state_from_amplitudes(amplitudes)
     expected_state = _state_from_amplitudes(_fft_amplitudes(amplitudes))
     qubits = LineQubit.range(len(amplitudes))
@@ -195,6 +195,37 @@ def test_ffft_single_mode(amplitudes):
         initial_state, qubits_that_should_be_present=qubits)
 
     assert np.allclose(state, expected_state, rtol=0.0)
+
+
+@pytest.mark.parametrize(
+        'amplitudes',
+        [[1, 0, 0],
+         [0, 1, 0],
+         [0, 0, 1],
+         [0, 0, 0, 1, 0],
+         [0, 1, 0, 0, 0, 0],
+         [0, 0, 1, 0, 0, 0],
+         [0, 0, 0, 1, 0, 0],
+         [0, 0, 0, 0, 1, 0],
+         [0, 0, 0, 0, 1, 0, 0, 0, 0],
+         [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+         ])
+def test_ffft_single_mode_arbitrary(amplitudes):
+    initial_state = _state_from_amplitudes(amplitudes)
+    expected_state = _state_from_amplitudes(_fft_amplitudes(amplitudes))
+    qubits = LineQubit.range(len(amplitudes))
+
+    circuit = cirq.Circuit.from_ops(
+        ffft(qubits), strategy=cirq.InsertStrategy.EARLIEST)
+    state = circuit.apply_unitary_effect_to_state(
+        initial_state, qubits_that_should_be_present=qubits)
+
+    cirq.testing.assert_allclose_up_to_global_phase(
+        state, expected_state, atol=1e-8)
 
 
 def test_ffft_text_diagram():
@@ -234,11 +265,6 @@ F₀──F₀    F₀──F₀    F₀──F₀    F₀──F₀
 def test_ffft_fails_without_qubits():
     with pytest.raises(ValueError):
         ffft([])
-
-
-def test_ffft_fails_for_odd_size():
-    with pytest.raises(ValueError):
-        ffft(LineQubit.range(3))
 
 
 def test_inverse():

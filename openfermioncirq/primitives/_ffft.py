@@ -15,10 +15,11 @@
 from typing import (List, Sequence)
 
 import numpy as np
+from sympy.ntheory import factorint
 
 import cirq
 import cirq.contrib.acquaintance.permutation
-from openfermioncirq import FSWAP
+import openfermioncirq
 
 
 class _F0Gate(cirq.TwoQubitMatrixGate):
@@ -114,6 +115,7 @@ F0 = _F0Gate()
 
 def ffft(qubits: Sequence[cirq.QubitId]) -> cirq.OP_TREE:
     r"""TODO"""
+
     n = len(qubits)
 
     if n == 0:
@@ -122,13 +124,36 @@ def ffft(qubits: Sequence[cirq.QubitId]) -> cirq.OP_TREE:
     if n == 1:
         return []
 
+    factors = [f for f, count in factorint(n).items() for _ in range(count)]
+    return _ffft(qubits, factors)
+
+
+def _ffft_prime(qubits: Sequence[cirq.QubitId]) -> cirq.OP_TREE:
+
+    def fft_matrix(n):
+        unit = np.exp(-2j * np.pi / n)
+        return np.array(
+            [[unit ** (j * k) for k in range(n)] for j in range(n)]
+        ) / np.sqrt(n)
+
+    n = len(qubits)
+
     if n == 2:
         return F0(*qubits)
+    else:
+        return openfermioncirq.bogoliubov_transform(qubits, fft_matrix(n))
 
-    if n % 2 != 0:
-        raise ValueError('Number of qubits is not a power of 2.')
 
-    ny = 2
+def _ffft(qubits: Sequence[cirq.QubitId], factors: List[int]) -> cirq.OP_TREE:
+
+    if len(factors) == 1:
+        return _ffft_prime(qubits)
+
+    n = len(qubits)
+
+    factors_y = factors[:1]
+    factors_x = factors[1:]
+    ny = np.prod(factors_y)
     nx = n // ny
     permutation = [(i % ny) * nx + (i // ny) for i in range(n)]
 
@@ -137,14 +162,14 @@ def ffft(qubits: Sequence[cirq.QubitId]) -> cirq.OP_TREE:
     operations.append(_permute(qubits, permutation))
 
     for y in range(ny):
-        operations.append(ffft(qubits[nx * y:nx * (y + 1)]))
+        operations.append(_ffft(qubits[nx * y:nx * (y + 1)], factors_x))
 
     operations.append(_permute(qubits, _inverse(permutation)))
 
     for x in range(nx):
         for y in range(1, ny):
             operations.append(_TwiddleGate(x * y, n).on(qubits[ny * x + y]))
-        operations.append(ffft(qubits[ny * x:ny * (x + 1)]))
+        operations.append(_ffft(qubits[ny * x:ny * (x + 1)], factors_y))
 
     operations.append(_permute(qubits, permutation))
 
@@ -188,5 +213,5 @@ def _permute(qubits: Sequence[cirq.QubitId],
     """
     return cirq.contrib.acquaintance.permutation.LinearPermutationGate(
         {i: permutation[i] for i in range(len(permutation))},
-        swap_gate=FSWAP
+        swap_gate=openfermioncirq.FSWAP
     ).on(*qubits)
