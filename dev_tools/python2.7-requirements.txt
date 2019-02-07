@@ -1,6 +1,7 @@
 numpy
 pandas
 scipy
+sympy
 typing~=3.6
 
 # NOTE: switch to non-dev versions when releasing!
