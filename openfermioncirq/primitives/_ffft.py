@@ -157,7 +157,7 @@ def _ffft(qubits: Sequence[cirq.QubitId], factors: List[int]) -> cirq.OP_TREE:
     nx = n // ny
     permutation = [(i % ny) * nx + (i // ny) for i in range(n)]
 
-    operations = list()
+    operations = []
 
     operations.append(_permute(qubits, permutation))
 
