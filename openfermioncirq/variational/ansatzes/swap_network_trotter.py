@@ -17,6 +17,7 @@ from typing import Iterable, Optional, Sequence, Tuple, cast
 import itertools
 
 import numpy
+import sympy
 
 import cirq
 import openfermion
@@ -140,7 +141,7 @@ class SwapNetworkTrotterAnsatz(VariationalAnsatz):
                  include_all_cz: bool=False,
                  include_all_z: bool=False,
                  adiabatic_evolution_time: Optional[float]=None,
-                 qubits: Optional[Sequence[cirq.QubitId]]=None
+                 qubits: Optional[Sequence[cirq.Qid]]=None
                  ) -> None:
         """
         Args:
@@ -184,7 +185,7 @@ class SwapNetworkTrotterAnsatz(VariationalAnsatz):
 
         super().__init__(qubits)
 
-    def params(self) -> Iterable[cirq.Symbol]:
+    def params(self) -> Iterable[sympy.Symbol]:
         """The parameters of the ansatz."""
         for i in range(self.iterations):
             for p in range(len(self.qubits)):
@@ -212,11 +213,11 @@ class SwapNetworkTrotterAnsatz(VariationalAnsatz):
                 bounds.append((-2.0, 2.0))
         return bounds
 
-    def _generate_qubits(self) -> Sequence[cirq.QubitId]:
+    def _generate_qubits(self) -> Sequence[cirq.Qid]:
         """Produce qubits that can be used by the ansatz circuit."""
         return cirq.LineQubit.range(openfermion.count_qubits(self.hamiltonian))
 
-    def operations(self, qubits: Sequence[cirq.QubitId]) -> cirq.OP_TREE:
+    def operations(self, qubits: Sequence[cirq.Qid]) -> cirq.OP_TREE:
         """Produce the operations of the ansatz circuit."""
         # TODO implement asymmetric ansatz
 

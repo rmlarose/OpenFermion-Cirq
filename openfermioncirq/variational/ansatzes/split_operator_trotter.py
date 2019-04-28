@@ -17,6 +17,7 @@ from typing import Iterable, Optional, Sequence, Tuple, cast
 import itertools
 
 import numpy
+import sympy
 
 import cirq
 import openfermion
@@ -149,7 +150,7 @@ class SplitOperatorTrotterAnsatz(VariationalAnsatz):
                  include_all_cz: bool=False,
                  include_all_z: bool=False,
                  adiabatic_evolution_time: Optional[float]=None,
-                 qubits: Optional[Sequence[cirq.QubitId]]=None
+                 qubits: Optional[Sequence[cirq.Qid]]=None
                  ) -> None:
         """
         Args:
@@ -192,7 +193,7 @@ class SplitOperatorTrotterAnsatz(VariationalAnsatz):
 
         super().__init__(qubits)
 
-    def params(self) -> Iterable[cirq.Symbol]:
+    def params(self) -> Iterable[sympy.Symbol]:
         """The names of the parameters of the ansatz."""
         for i in range(self.iterations):
             for p in range(len(self.qubits)):
@@ -208,11 +209,11 @@ class SplitOperatorTrotterAnsatz(VariationalAnsatz):
         """Bounds on the parameters."""
         return [(-1.0, 1.0)] * len(list(self.params()))
 
-    def _generate_qubits(self) -> Sequence[cirq.QubitId]:
+    def _generate_qubits(self) -> Sequence[cirq.Qid]:
         """Produce qubits that can be used by the ansatz circuit."""
         return cirq.LineQubit.range(openfermion.count_qubits(self.hamiltonian))
 
-    def operations(self, qubits: Sequence[cirq.QubitId]) -> cirq.OP_TREE:
+    def operations(self, qubits: Sequence[cirq.Qid]) -> cirq.OP_TREE:
         """Produce the operations of the ansatz circuit."""
         # TODO implement asymmetric ansatz
 
@@ -254,8 +255,8 @@ class SplitOperatorTrotterAnsatz(VariationalAnsatz):
         # Rotate to the computational basis
         yield bogoliubov_transform(qubits, self.basis_change_matrix)
 
-    def qubit_permutation(self, qubits: Sequence[cirq.QubitId]
-                          ) -> Sequence[cirq.QubitId]:
+    def qubit_permutation(self, qubits: Sequence[cirq.Qid]
+                          ) -> Sequence[cirq.Qid]:
         """The qubit permutation induced by the ansatz circuit."""
         # Every iteration reverses the qubit ordering due to the use of a
         # swap network

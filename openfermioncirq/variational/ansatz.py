@@ -17,6 +17,7 @@ from typing import Iterable, Optional, Sequence, Tuple
 import abc
 
 import numpy
+import sympy
 
 import cirq
 
@@ -40,7 +41,7 @@ class VariationalAnsatz(metaclass=abc.ABCMeta):
         qubits: A list containing the qubits used by the ansatz circuit.
     """
 
-    def __init__(self, qubits: Optional[Sequence[cirq.QubitId]]=None) -> None:
+    def __init__(self, qubits: Optional[Sequence[cirq.Qid]]=None) -> None:
         """
         Args:
             qubits: Qubits to be used by the ansatz circuit. If not specified,
@@ -55,7 +56,7 @@ class VariationalAnsatz(metaclass=abc.ABCMeta):
                 strategy=cirq.InsertStrategy.EARLIEST)
 
     @abc.abstractmethod
-    def params(self) -> Iterable[cirq.Symbol]:
+    def params(self) -> Iterable[sympy.Symbol]:
         """The parameters of the ansatz."""
         pass
 
@@ -98,7 +99,7 @@ class VariationalAnsatz(metaclass=abc.ABCMeta):
         return numpy.zeros(len(list(self.params())))
 
     @abc.abstractmethod
-    def operations(self, qubits: Sequence[cirq.QubitId]) -> cirq.OP_TREE:
+    def operations(self, qubits: Sequence[cirq.Qid]) -> cirq.OP_TREE:
         """Produce the operations of the ansatz circuit.
 
         The operations should use Symbols produced by the `params` method
@@ -107,13 +108,13 @@ class VariationalAnsatz(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def _generate_qubits(self) -> Sequence[cirq.QubitId]:
+    def _generate_qubits(self) -> Sequence[cirq.Qid]:
         """Produce qubits that can be used by the ansatz circuit."""
         pass
 
     # TODO also need to consider mode permutation
-    def qubit_permutation(self, qubits: Sequence[cirq.QubitId]
-                          ) -> Sequence[cirq.QubitId]:
+    def qubit_permutation(self, qubits: Sequence[cirq.Qid]
+                          ) -> Sequence[cirq.Qid]:
         """The qubit permutation induced by the ansatz circuit.
 
         An ansatz circuit may induce a permutation on its qubits. For example,
