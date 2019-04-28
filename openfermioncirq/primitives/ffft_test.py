@@ -317,6 +317,29 @@ def test_ffft_multi_fermionic_mode(n, initial):
     assert np.allclose(state, expected_state, rtol=0.0)
 
 
+@pytest.mark.parametrize(
+        'n, initial',
+        [(3, (1, [0, 1])),
+         (3, (1, [0, 1])),
+         (5, (1, [0, 3, 4])),
+         (6, (1, [0, 1, 2, 3])),
+         (7, (1, [0, 1, 5, 6])),
+         (9, (1, [2, 4, 6])),
+         ])
+def test_ffft_multi_fermionic_mode_non_power_of_2(n, initial):
+    initial_state = _multi_fermionic_mode_base_state(n, *initial)
+    expected_state = _fourier_transform_multi_fermionic_mode(n, *initial)
+    qubits = LineQubit.range(n)
+
+    circuit = cirq.Circuit.from_ops(
+        ffft(qubits), strategy=cirq.InsertStrategy.EARLIEST)
+    state = circuit.apply_unitary_effect_to_state(
+        initial_state, qubits_that_should_be_present=qubits)
+
+    cirq.testing.assert_allclose_up_to_global_phase(
+        state, expected_state, atol=1e-8)
+
+
 def test_ffft_text_diagram():
     qubits = LineQubit.range(8)
 
@@ -356,7 +379,7 @@ def test_ffft_fails_without_qubits():
         ffft([])
 
 
-@pytest.mark.parametrize('size', [1, 2, 4, 8])
+@pytest.mark.parametrize('size', [1, 2, 3, 4, 5, 6, 7, 8])
 def test_ffft_equal_to_bogoliubov(size):
 
     def fourier_transform_matrix():
