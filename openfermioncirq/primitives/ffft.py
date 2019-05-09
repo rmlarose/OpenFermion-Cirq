@@ -19,7 +19,8 @@ from sympy.ntheory import factorint
 
 import cirq
 import cirq.contrib.acquaintance.permutation
-import openfermioncirq
+from openfermioncirq import FSWAP
+from openfermioncirq.primitives import bogoliubov_transform
 
 
 class _F0Gate(cirq.TwoQubitMatrixGate):
@@ -94,7 +95,7 @@ class _TwiddleGate(cirq.SingleQubitGate):
         """Initializes Twiddle gate.
 
         Args:
-            k: Nominator appearing in the exponent.
+            k: Numerator appearing in the exponent.
             n: Denominator appearing in the exponent.
         """
         self.k = k
@@ -209,7 +210,7 @@ def _ffft_prime(qubits: Sequence[cirq.Qid]) -> cirq.OP_TREE:
     if n == 2:
         return F0(*qubits)
     else:
-        return openfermioncirq.bogoliubov_transform(qubits, fft_matrix(n))
+        return bogoliubov_transform(qubits, fft_matrix(n))
 
 
 def _ffft(qubits: Sequence[cirq.Qid], factors: List[int]) -> cirq.OP_TREE:
@@ -280,5 +281,5 @@ def _permute(qubits: Sequence[cirq.Qid],
     return cirq.contrib.acquaintance.permutation.LinearPermutationGate(
         len(qubits),
         {i: permutation[i] for i in range(len(permutation))},
-        openfermioncirq.FSWAP
+        FSWAP
     ).on(*qubits)
